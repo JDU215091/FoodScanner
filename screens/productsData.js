@@ -1,0 +1,36 @@
+// productsData.js
+export const productsDatabase = {
+  '4011100091993': {
+    id: '4011100091993',
+    name: 'Snikers',
+    image: require('../assets/icon.png'),
+    barcode: '4011100091993',
+    category: 'Шоколад',
+    calories: 250,
+    protein: 4.3,
+    carbs: 35,
+    fat: 12,
+  },
+  '5449000000996': { 
+    id: '5449000000996',
+    name: 'Coca-Cola',
+    image: require('../assets/icon.png'), 
+    barcode: '5449000000996',
+    category: 'Напиток',
+    calories: 42,
+    protein: 0,
+    carbs: 10.6,
+    fat: 0,
+  },
+  '4780022620153': { 
+    id: '4780022620153',
+    name: 'Pepsi',
+    image: require('../assets/icon.png'), 
+    barcode: '4780022620153',
+    category: 'Напиток',
+    calories: 110,
+    protein: 0,
+    carbs: 12,
+    fat: 0,
+  },
+};
