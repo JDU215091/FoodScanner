@@ -41,7 +41,9 @@
     },
     "owner": "kuralll",
     "plugins": [
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      "expo-font",
+      "expo-status-bar"
     ]
   }
 }

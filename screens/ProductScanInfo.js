@@ -2,11 +2,11 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Package } from 'lucide-react-native';
+import { ArrowLeft, Package, AlertTriangle, AlertCircle, Info } from 'lucide-react-native';
 
 export default function ProductScanInfo({ route }) {
   const navigation = useNavigation();
-  const { productData, barcode } = route.params;
+  const { productData, barcode, allergenCheckResult } = route.params;
 
   if (!productData) {
     return (
@@ -34,6 +34,76 @@ export default function ProductScanInfo({ route }) {
             {productData._source === 'local' ? '📦 Локальная база' : '🌍 Open Food Facts'}
           </Text>
         </View>
+
+        {/* Allergy Warning Section */}
+        {allergenCheckResult && (
+          <>
+            {allergenCheckResult.hasAllergen && (
+              <View style={styles.allergyWarningDanger}>
+                <View style={styles.allergyWarningHeader}>
+                  <AlertTriangle size={24} color="#EF4444" />
+                  <Text style={styles.allergyWarningTitleDanger}>
+                    ⚠️ Обнаружен аллерген!
+                  </Text>
+                </View>
+                <Text style={styles.allergyWarningText}>
+                  Этот продукт содержит ингредиенты, на которые у вас аллергия:
+                </Text>
+                {allergenCheckResult.detectedAllergens.map((detection, index) => (
+                  <View key={index} style={styles.allergenDetectionItem}>
+                    <Text style={styles.allergenDetectionIcon}>
+                      {detection.allergen.icon}
+                    </Text>
+                    <View style={styles.allergenDetectionText}>
+                      <Text style={styles.allergenDetectionName}>
+                        {detection.allergen.name}
+                      </Text>
+                      {detection.matchedTerms && detection.matchedTerms.length > 0 && (
+                        <Text style={styles.allergenDetectionMatched}>
+                          Найдено: {detection.matchedTerms.slice(0, 3).join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                ))}
+                <Text style={styles.allergyWarningFooter}>
+                  Не употребляйте этот продукт!
+                </Text>
+              </View>
+            )}
+
+            {!allergenCheckResult.hasAllergen && allergenCheckResult.warnings.length > 0 && (
+              <View style={styles.allergyWarningCaution}>
+                <View style={styles.allergyWarningHeader}>
+                  <AlertCircle size={24} color="#F59E0B" />
+                  <Text style={styles.allergyWarningTitleCaution}>
+                    Недостаточно данных
+                  </Text>
+                </View>
+                <Text style={styles.allergyWarningText}>
+                  {allergenCheckResult.warnings[0].message}
+                </Text>
+                <Text style={styles.allergyWarningFooter}>
+                  Проверьте состав на упаковке перед употреблением.
+                </Text>
+              </View>
+            )}
+
+            {!allergenCheckResult.hasAllergen && allergenCheckResult.warnings.length === 0 && (
+              <View style={styles.allergyWarningSafe}>
+                <View style={styles.allergyWarningHeader}>
+                  <Info size={24} color="#10B981" />
+                  <Text style={styles.allergyWarningTitleSafe}>
+                    ✓ Аллергены не обнаружены
+                  </Text>
+                </View>
+                <Text style={styles.allergyWarningTextSafe}>
+                  По имеющимся данным, этот продукт не содержит аллергенов из вашего списка.
+                </Text>
+              </View>
+            )}
+          </>
+        )}
 
         {/* Изображение продукта */}
         {productData.image_url ? (
@@ -307,5 +377,100 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     textAlign: 'center',
     marginTop: 40,
+  },
+  // Allergy Warning Styles
+  allergyWarningDanger: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#FCA5A5',
+  },
+  allergyWarningCaution: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#FFE082',
+  },
+  allergyWarningSafe: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#BBF7D0',
+  },
+  allergyWarningHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  allergyWarningTitleDanger: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#DC2626',
+    marginLeft: 12,
+  },
+  allergyWarningTitleCaution: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#D97706',
+    marginLeft: 12,
+  },
+  allergyWarningTitleSafe: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#059669',
+    marginLeft: 12,
+  },
+  allergyWarningText: {
+    fontSize: 15,
+    color: '#7C2D12',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  allergyWarningTextSafe: {
+    fontSize: 15,
+    color: '#065F46',
+    lineHeight: 22,
+  },
+  allergyWarningFooter: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#991B1B',
+    marginTop: 8,
+  },
+  allergenDetectionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginVertical: 6,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  allergenDetectionIcon: {
+    fontSize: 28,
+    marginRight: 12,
+  },
+  allergenDetectionText: {
+    flex: 1,
+  },
+  allergenDetectionName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#DC2626',
+    marginBottom: 2,
+  },
+  allergenDetectionMatched: {
+    fontSize: 13,
+    color: '#7C2D12',
   },
 });

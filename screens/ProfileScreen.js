@@ -29,6 +29,7 @@ import {
   Trophy,
   Bell,
   ChevronRight,
+  ShieldAlert,
 } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
@@ -466,6 +467,24 @@ export default function ProfileScreen() {
             <View style={styles.quickActionsContainer}>
               <Text style={styles.sectionTitle}>Быстрые действия</Text>
               
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => navigation.navigate("AllergySettings")}
+              >
+                <View style={styles.actionLeft}>
+                  <View style={[styles.actionIcon, { backgroundColor: "#FEF2F2" }]}>
+                    <ShieldAlert size={22} color="#EF4444" />
+                  </View>
+                  <View style={styles.actionTextContainer}>
+                    <Text style={styles.actionTitle}>Настройки аллергии</Text>
+                    <Text style={styles.actionSubtitle}>
+                      Управление списком аллергенов
+                    </Text>
+                  </View>
+                </View>
+                <ChevronRight size={20} color="#94A3B8" />
+              </TouchableOpacity>
+
               <TouchableOpacity 
                 style={styles.actionButton}
                 onPress={() => navigation.navigate("Achievements")}

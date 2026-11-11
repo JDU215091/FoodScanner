@@ -4,9 +4,12 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import ProductScanner from './ProductScanner';
 import { products } from '../data/products';
+import { useAuth } from '../auth/AuthProvider';
+import { loadUserAllergens, performAllergenCheck } from '../utils/allergenUtils';
 
 export default function InfoScanner() {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const fetchProductInfo = async (barcode) => {
@@ -33,12 +36,16 @@ export default function InfoScanner() {
           _source: 'local' // Метка что из локальной базы
         };
         
+        // 🔍 Проверка на аллергены
+        const allergenCheckResult = await checkProductForAllergens(productData);
+        
         setLoading(false);
         
         // 📱 Переход на страницу с деталями
         navigation.navigate('ProductScanInfo', { 
           productData: productData,
-          barcode: barcode 
+          barcode: barcode,
+          allergenCheckResult: allergenCheckResult
         });
         
         return; // Останавливаемся, не идем в API
@@ -61,12 +68,16 @@ export default function InfoScanner() {
           _source: 'api' // Метка что из API
         };
         
+        // 🔍 Проверка на аллергены
+        const allergenCheckResult = await checkProductForAllergens(productData);
+        
         setLoading(false);
         
         // 📱 Переход на страницу с деталями
         navigation.navigate('ProductScanInfo', { 
           productData: productData,
-          barcode: barcode 
+          barcode: barcode,
+          allergenCheckResult: allergenCheckResult
         });
       } else {
         // ❌ Продукт не найден нигде
@@ -85,6 +96,34 @@ export default function InfoScanner() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Проверка продукта на аллергены
+  const checkProductForAllergens = async (productData) => {
+    try {
+      if (!user?.email) {
+        // Пользователь не вошел в систему
+        return null;
+      }
+
+      // Загружаем аллергены пользователя
+      const userAllergens = await loadUserAllergens(user.email);
+      
+      if (userAllergens.length === 0) {
+        // У пользователя нет настроенных аллергенов
+        return null;
+      }
+
+      // Выполняем проверку
+      const result = performAllergenCheck(productData, userAllergens);
+      
+      console.log('🔍 Результат проверки аллергенов:', result);
+      
+      return result;
+    } catch (error) {
+      console.error('Ошибка при проверке аллергенов:', error);
+      return null;
     }
   };
 

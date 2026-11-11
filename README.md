@@ -108,3 +108,51 @@ Ushbu repo backendni o‘z ichiga olmaydi. Autentifikatsiya lokal `AsyncStorage`
 
 - Git tarixida faqat `Initial commit` mavjud
 - Aniq shaxsiy contribution history bu yerdan ajratib bo‘lmaydi
+
+
+---
+
+## 🆕 Новая функция: Уведомления об аллергенах / Yangi funksiya: Allergen ogohlantirishlari
+
+### 🛡️ Возможности / Imkoniyatlar:
+
+- Настройка личных аллергенов (9 категорий)
+- Автоматическая проверка при сканировании продуктов
+- Трехуровневая система предупреждений:
+  - 🔴 **Красный** - Аллерген обнаружен
+  - 🟡 **Желтый** - Недостаточно данных
+  - 🟢 **Зеленый** - Аллергены не обнаружены
+
+- Shaxsiy allergenlarni sozlash (9 kategoriya)
+- Mahsulot skanerda avtomatik tekshirish
+- Uch darajali ogohlantirish tizimi:
+  - 🔴 **Qizil** - Allergen topildi
+  - 🟡 **Sariq** - Ma'lumot yetarli emas
+  - 🟢 **Yashil** - Allergenlar topilmadi
+
+### 📱 Использование / Foydalanish:
+
+1. **Profile** → **Настройки аллергии** / **Allergiya sozlamalari**
+2. Выберите аллергены / Allergenlarni tanlang
+3. Сканируйте продукт / Mahsulotni skanerlang
+4. Получите предупреждение (если нужно) / Ogohlantirishni ko'ring
+
+### ⚠️ Важно / Muhim:
+
+Всегда проверяйте состав на упаковке продукта. Приложение не гарантирует 100% точность.
+
+Har doim mahsulot qadoqidagi tarkibni tekshiring. Ilova 100% aniqlikni kafolatlamaydi.
+
+---
+
+## 🧩 Поддерживаемые аллергены / Qo'llab-quvvatlanadigan allergenlar:
+
+1. 🥛 Молоко и молочные продукты / Sut va sut mahsulotlari
+2. 🥚 Яйца / Tuxum
+3. 🥜 Арахис / Yer yong'og'i
+4. 🌰 Орехи (миндаль, грецкий и др.) / Yong'oqlar
+5. 🫘 Соя / Soya
+6. 🌾 Пшеница и глютен / Bug'doy va gluten
+7. 🐟 Рыба / Baliq
+8. 🦐 Ракообразные и моллюски / Qisqichbaqalar
+9. 🌿 Кунжут / Kunjut

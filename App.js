@@ -26,6 +26,7 @@ import LoginScreen from "./screens/LoginScreen";
 import WorkoutDetailScreen from "./screens/WorkoutDetailScreen";
 import AchievementsScreen from "./screens/AchievementsScreen";
 import NotificationsScreen from "./screens/NotificationsScreen";
+import AllergySettingsScreen from "./screens/AllergySettingsScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -103,6 +104,11 @@ function AppNavigator() {
       />
       <Stack.Screen name="Achievements" component={AchievementsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen
+        name="AllergySettings"
+        component={AllergySettingsScreen}
+        options={{ headerShown: true, title: "Настройки аллергии" }}
+      />
     </Stack.Navigator>
   );
 }
