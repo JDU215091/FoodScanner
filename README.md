@@ -253,9 +253,9 @@ Ushbu ilova backend serverdan foydalanmasdan, lokal xotira (AsyncStorage) orqali
 
 ### 最新のアップデート / Oxirgi yangilanish
 
-**アレルギー通知機能の追加（2025年1月）**
+**アレルギー通知機能の追加（2026年10月）**
 
-Allergiya xabardorlik funksiyasi qo'shildi (2025 yil yanvar)
+Allergiya xabardorlik funksiyasi qo'shildi (2026 yil oktyabr)
 
 主な変更内容：
 
