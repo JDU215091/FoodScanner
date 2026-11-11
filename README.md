@@ -129,7 +129,7 @@ FoodScanner/
 
 ```bash
 # リポジトリをクローン / Repositoriyani klonlash
-git clone https://github.com/JDU215091/FoodScanner.git
+git clone <your-repository-url>
 cd FoodScanner
 
 # 依存関係をインストール / Bog'liqliklarni o'rnatish
@@ -328,8 +328,6 @@ Ushbu loyihaning litsenziyasi haqida ma'lumot olish uchun repositoriya egasi bil
 プロジェクトに関する質問や提案がある場合は、GitHubのIssuesセクションでお知らせください。
 
 Loyiha haqida savollaringiz yoki takliflaringiz bo'lsa, GitHub'dagi Issues bo'limidan xabar bering.
-
-**GitHub:** https://github.com/JDU215091/FoodScanner
 
 ---
 
