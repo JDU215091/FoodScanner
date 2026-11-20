@@ -1,13 +1,5 @@
 # FoodScanner
 
-## プロジェクト概要 / Loyihaning umumiy tavsifi
-
-**FoodScanner** は、React Native と Expo を使って作られたモバイルアプリです。食品のバーコードをスキャンして栄養情報を確認し、食事、飲水、トレーニングを記録できます。
-
-**FoodScanner** — bu React Native va Expo asosida yaratilgan mobil ilova. Foydalanuvchi oziq-ovqat barcode'ini skanerlab, oziqlanish ma'lumotini tekshirishi, ovqat, suv va mashqlarini yozib borishi mumkin.
-
----
-
 ## プロジェクトの目的 / Loyiha maqsadi
 
 このアプリは、日常の健康管理をサポートするために作られました：
@@ -15,24 +7,89 @@
 - バーコードスキャンで食品情報を素早く取得
 - 食事と水分摂取の記録を簡単に
 - トレーニング記録と達成システムで健康的な習慣を促進
+- アレルギー情報の自動チェックで安全な食生活をサポート
 
 Ushbu ilova kundalik sog'liqni boshqarishni qo'llab-quvvatlash uchun yaratilgan:
 
 - Barcode skanerlash orqali oziq-ovqat ma'lumotini tez olish
 - Ovqat va suv iste'molini oson yozib borish
 - Trening yozuvlari va yutuqlar tizimi orqali sog'lom odatlarni rivojlantirish
+- Allergiya ma'lumotini avtomatik tekshirish orqali xavfsiz ovqatlanishni qo'llab-quvvatlash
+
+---
+
+## プロジェクト構造 / Loyiha tuzilmasi
+
+```
+FoodScanner/
+├── App.js                          メインアプリファイル / Asosiy ilova fayli
+├── index.js                        エントリーポイント / Kirish nuqtasi
+├── polyfills.js                    互換性のためのポリフィル / Muvofiqlik uchun polyfill
+├── metro.config.js                 Metro設定 / Metro konfiguratsiyasi
+├── auth/
+│   └── AuthProvider.js             認証管理 / Autentifikatsiya boshqaruvi
+├── screens/
+│   ├── AllergySettingsScreen.js    アレルギー設定画面 / Allergiya sozlamalari
+│   ├── ProductScanInfo.js          製品詳細とアレルギー警告 / Mahsulot tafsilotlari va allergiya ogohlantirishlari
+│   ├── InfoScanner.js              スキャナー画面 / Skaner ekrani
+│   ├── ProfileScreen.js            プロフィール画面 / Profil ekrani
+│   ├── HomeScreen.js               ホーム画面 / Asosiy ekran
+│   ├── CalendarScreen.js           カレンダー画面 / Kalendar ekrani
+│   ├── LoginScreen.js              ログイン画面 / Kirish ekrani
+│   ├── SignUpScreen.js             登録画面 / Ro'yxatdan o'tish ekrani
+│   ├── MealHistoryScreen.js        食事履歴画面 / Ovqat tarixi ekrani
+│   ├── WaterScreen.js              水分記録画面 / Suv yozuvlari ekrani
+│   ├── TrainingScreen.js           トレーニング画面 / Trening ekrani
+│   └── AchievementsScreen.js       達成画面 / Yutuqlar ekrani
+├── utils/
+│   ├── allergenUtils.js            アレルゲン検出ロジック / Allergen aniqlash logikasi
+│   ├── achievementsUtils.js        達成システム / Yutuqlar tizimi
+│   └── notificationsUtils.js       通知管理 / Xabarnomalar boshqaruvi
+├── components/
+│   └── AchievementToast.js         達成通知コンポーネント / Yutuq xabarnomasi komponenti
+└── data/
+    └── products.js                  ローカル製品データ / Lokal mahsulot ma'lumotlari
+```
 
 ---
 
 ## 主な機能 / Asosiy funksiyalar
 
-### 食品スキャン機能 / Oziq-ovqat skanerlash
+### 1. 認証システム / Autentifikatsiya tizimi
 
-バーコードをスキャンすることで、製品の詳細情報を取得できます。Open Food Facts API とローカルデータベースを組み合わせて、より多くの製品情報を提供します。
+**何をする？ / Nima qiladi?**
 
-Barcode skanerlab mahsulot haqida batafsil ma'lumot olish mumkin. Open Food Facts API va lokal ma'lumotlar bazasidan foydalanib, ko'proq mahsulotlar haqida ma'lumot taqdim etamiz.
+ユーザー登録とログイン機能。各ユーザーのデータを個別に管理します。
 
-### アレルギー情報の通知機能（新機能）/ Allergiya haqida xabardorlik (yangi)
+Foydalanuvchi ro'yxatdan o'tish va kirish funksiyasi. Har bir foydalanuvchining ma'lumotlarini alohida boshqaradi.
+
+**どこで使う？ / Qayerda ishlatiladi?**
+
+- `auth/AuthProvider.js` - 認証ロジック / Autentifikatsiya logikasi
+- `screens/LoginScreen.js` - ログイン画面 / Kirish ekrani
+- `screens/SignUpScreen.js` - 登録画面 / Ro'yxatdan o'tish ekrani
+
+---
+
+### 2. 食品スキャン機能 / Oziq-ovqat skanerlash
+
+**何をする？ / Nima qiladi?**
+
+バーコードをスキャンして製品の詳細情報（名前、カロリー、栄養成分、アレルゲン情報）を取得します。Open Food Facts APIとローカルデータベースを使用します。
+
+Barcode skanerlab mahsulot haqida batafsil ma'lumot (nomi, kaloriya, oziqlik tarkibi, allergen ma'lumoti) oladi. Open Food Facts API va lokal ma'lumotlar bazasidan foydalanadi.
+
+**どこで使う？ / Qayerda ishlatiladi?**
+
+- `screens/InfoScanner.js` - スキャナー画面とAPI呼び出し / Skaner ekrani va API chaqiruvlari
+- `screens/ProductScanInfo.js` - 製品詳細表示 / Mahsulot tafsilotlarini ko'rsatish
+- `data/products.js` - ローカル製品データ / Lokal mahsulot ma'lumotlari
+
+---
+
+### 3. アレルギー情報の通知機能（2026年10月追加）/ Allergiya haqida xabardorlik (2026 yil oktyabr qo'shildi)
+
+**何をする？ / Nima qiladi?**
 
 ユーザーが設定した9種類のアレルゲンを自動的にチェックし、製品をスキャンした際に警告を表示します。
 
@@ -50,284 +107,113 @@ Foydalanuvchi sozlagan 9 xil allergenni avtomatik tekshirib, mahsulotni skanerla
 - 甲殻類・貝類 / Qisqichbaqalar va mollyuskalar
 - ごま / Kunjut
 
-### その他の機能 / Boshqa funksiyalar
+**警告の種類 / Ogohlantirish turlari:**
 
-- ユーザー登録とログイン（ローカル認証）
-- 食事記録とカロリー管理
-- 水分摂取の記録
-- トレーニング記録
-- 達成システム（連続記録日数、目標達成など）
-- リマインダー通知
-- プロフィール編集とBMI計算
+🔴 **赤色警告：アレルゲン検出 / Qizil: Allergen topildi**
+選択したアレルゲンが製品に含まれている場合
 
-- Foydalanuvchi ro'yxatdan o'tish va kirish (lokal autentifikatsiya)
-- Ovqat yozuvlari va kaloriya boshqaruvi
-- Suv iste'moli yozuvlari
-- Mashq yozuvlari
-- Yutuqlar tizimi (ketma-ket kunlar, maqsadga erishish va boshqalar)
-- Eslatma xabarnomalar
-- Profil tahrirlash va BMI hisoblash
+🟡 **黄色警告：データ不足 / Sariq: Ma'lumot yetarli emas**
+製品の成分情報が不完全または欠落している場合
 
----
+🟢 **緑色表示：安全 / Yashil: Xavfsiz**
+選択したアレルゲンが検出されなかった場合
 
-## 技術スタック / Texnologiya staki
+**どこで使う？ / Qayerda ishlatiladi?**
 
-このプロジェクトは以下の技術で構築されています：
-
-Ushbu loyiha quyidagi texnologiyalar asosida qurilgan:
-
-- **React Native** - モバイルアプリ開発フレームワーク / Mobil ilova ishlab chiqish freymvorki
-- **Expo SDK 58** - React Native開発ツール / React Native ishlab chiqish vositasi
-- **React Navigation** - 画面ナビゲーション / Ekranlar navigatsiyasi
-- **AsyncStorage** - ローカルデータ保存 / Lokal ma'lumotlar saqlash
-- **Axios** - HTTP通信 / HTTP aloqa
-- **Expo Camera** - カメラとバーコードスキャン / Kamera va barcode skanerlash
-- **Expo Notifications** - プッシュ通知 / Push xabarnomalar
-- **Lucide React Native** - アイコンライブラリ / Ikonlar kutubxonasi
+- `utils/allergenUtils.js` - アレルゲン検出ロジック（100以上の同義語辞書、検出アルゴリズム）/ Allergen aniqlash logikasi (100+ sinonim lug'ati, aniqlash algoritmi)
+- `screens/AllergySettingsScreen.js` - アレルゲン選択画面 / Allergen tanlash ekrani
+- `screens/ProfileScreen.js` - 設定へのナビゲーション / Sozlamalarga navigatsiya
+- `screens/InfoScanner.js` - スキャン時のアレルゲンチェック / Skanerlashda allergen tekshiruvi
+- `screens/ProductScanInfo.js` - 警告表示 / Ogohlantirish ko'rsatish
 
 ---
 
-## プロジェクト構造 / Loyiha tuzilmasi
+### 4. 食事記録機能 / Ovqat yozuvlari
 
-```
-FoodScanner/
-├── App.js                          メインアプリファイル / Asosiy ilova fayli
-├── index.js                        エントリーポイント / Kirish nuqtasi
-├── polyfills.js                    互換性のためのポリフィル / Muvofiqlik uchun polyfill
-├── metro.config.js                 Metro設定 / Metro konfiguratsiyasi
-├── auth/
-│   └── AuthProvider.js             認証管理 / Autentifikatsiya boshqaruvi
-├── screens/
-│   ├── AllergySettingsScreen.js    アレルギー設定画面（新規）/ Allergiya sozlamalari (yangi)
-│   ├── ProductScanInfo.js          製品詳細とアレルギー警告 / Mahsulot tafsilotlari va allergiya ogohlantirishlari
-│   ├── InfoScanner.js              スキャナー画面 / Skaner ekrani
-│   ├── ProfileScreen.js            プロフィール画面 / Profil ekrani
-│   ├── HomeScreen.js               ホーム画面 / Asosiy ekran
-│   ├── CalendarScreen.js           カレンダー画面 / Kalendar ekrani
-│   └── ...                         その他の画面 / Boshqa ekranlar
-├── utils/
-│   ├── allergenUtils.js            アレルゲン検出ロジック（新規）/ Allergen aniqlash logikasi (yangi)
-│   ├── achievementsUtils.js        達成システム / Yutuqlar tizimi
-│   └── notificationsUtils.js       通知管理 / Xabarnomalar boshqaruvi
-├── components/
-│   └── AchievementToast.js         達成通知コンポーネント / Yutuq xabarnomasi komponenti
-└── data/
-    └── products.js                  ローカル製品データ / Lokal mahsulot ma'lumotlari
-```
+**何をする？ / Nima qiladi?**
+
+毎日の食事を記録し、合計カロリーと栄養素を追跡します。
+
+Kunlik ovqatlarni yozib boradi va jami kaloriya hamda oziqlik moddalarini kuzatadi.
+
+**どこで使う？ / Qayerda ishlatiladi?**
+
+- `screens/HomeScreen.js` - 食事追加ボタン / Ovqat qo'shish tugmasi
+- `screens/MealHistoryScreen.js` - 食事履歴表示 / Ovqat tarixini ko'rsatish
+- `screens/CalendarScreen.js` - カレンダー形式の表示 / Kalendar formatida ko'rsatish
 
 ---
 
-## インストールと実行 / O'rnatish va ishga tushirish
+### 5. 水分記録機能 / Suv yozuvlari
 
-### 必要な環境 / Zarur muhit
+**何をする？ / Nima qiladi?**
 
-- Node.js（バージョン14以上）/ Node.js (14+ versiya)
-- npm または yarn
-- Expo Go アプリ（モバイルデバイス）/ Expo Go ilovasi (mobil qurilma)
+毎日の水分摂取量を記録し、目標達成を追跡します。
 
-### インストール手順 / O'rnatish bosqichlari
+Kunlik suv iste'molini yozib boradi va maqsadga erishishni kuzatadi.
 
-```bash
-# リポジトリをクローン / Repositoriyani klonlash
-git clone <your-repository-url>
-cd FoodScanner
+**どこで使う？ / Qayerda ishlatiladi?**
 
-# 依存関係をインストール / Bog'liqliklarni o'rnatish
-npm install
-
-# アプリを起動 / Ilovani ishga tushirish
-npm start
-```
-
-### プラットフォーム別の実行 / Platformaga qarab ishga tushirish
-
-**Android:**
-```bash
-npm run android
-```
-
-**iOS:**
-```bash
-npm run ios
-```
-
-**Web（開発用）:**
-```bash
-npm run web
-```
+- `screens/WaterScreen.js` - 水分記録画面 / Suv yozuvlari ekrani
 
 ---
 
-## API統合 / API integratsiyasi
+### 6. トレーニング記録機能 / Trening yozuvlari
 
-このアプリは外部APIを使用して製品情報を取得します：
+**何をする？ / Nima qiladi?**
 
-Ushbu ilova mahsulot ma'lumotlarini olish uchun tashqi API'lardan foydalanadi:
+運動の種類、時間、カロリー消費を記録します。
 
-### Open Food Facts API
+Mashq turi, vaqti va kaloriya sarfini yozib boradi.
 
-世界中の食品データベース。バーコードで製品情報を検索できます。
+**どこで使う？ / Qayerda ishlatiladi?**
 
-Dunyo bo'ylab oziq-ovqat ma'lumotlar bazasi. Barcode orqali mahsulot ma'lumotlarini qidirish mumkin.
-
-**エンドポイント / Endpoint:**
-```
-https://world.openfoodfacts.org/api/v0/product/{barcode}.json
-```
-
-### FoodRepo API（予備）/ FoodRepo API (zaxira)
-
-Open Food Factsで見つからない製品の予備APIとして使用します。
-
-Open Food Facts'da topilmagan mahsulotlar uchun zaxira API sifatida ishlatiladi.
-
-**エンドポイント / Endpoint:**
-```
-https://www.foodrepo.org/api/v3/products?barcodes_ean13={barcode}
-```
+- `screens/TrainingScreen.js` - トレーニング記録画面 / Trening yozuvlari ekrani
 
 ---
 
-## アレルギー機能の使い方 / Allergiya funksiyasidan foydalanish
+### 7. 達成システム / Yutuqlar tizimi
 
-### 設定方法 / Sozlash usuli
+**何をする？ / Nima qiladi?**
 
-1. アプリを開いて、プロフィールタブに移動 / Ilovani oching va Profil tabiga o'ting
-2. 「アレルギー設定」ボタンをタップ / "Allergiya sozlamalari" tugmasini bosing
-3. 該当するアレルゲンを選択 / Tegishli allergenlarni tanlang
-4. 「保存」をタップして設定を保存 / "Saqlash" tugmasini bosib sozlamalarni saqlang
+連続記録日数、目標達成などのマイルストーンを追跡し、ユーザーのモチベーションを高めます。
 
-### スキャン時の動作 / Skanerlashda ishlash
+Ketma-ket kunlar, maqsadga erishish kabi yutuqlarni kuzatib, foydalanuvchi motivatsiyasini oshiradi.
 
-製品をスキャンすると、アプリは自動的にアレルゲンをチェックし、以下のいずれかを表示します：
+**どこで使う？ / Qayerda ishlatiladi?**
 
-Mahsulotni skanerlaganda, ilova avtomatik ravishda allergenlarni tekshiradi va quyidagilardan birini ko'rsatadi:
-
-**赤色警告：アレルゲン検出 / Qizil ogohlantirish: Allergen topildi**
-
-選択したアレルゲンが製品に含まれている場合に表示されます。検出されたアレルゲンの詳細と、該当する成分が示されます。
-
-Tanlangan allergen mahsulotda topilganda ko'rsatiladi. Topilgan allergen va tegishli ingredient ko'rsatiladi.
-
-**黄色警告：データ不足 / Sariq ogohlantirish: Ma'lumot yetarli emas**
-
-製品の成分情報が不完全または欠落している場合に表示されます。この場合、製品パッケージを直接確認することをお勧めします。
-
-Mahsulot tarkibi to'liq bo'lmagan yoki mavjud bo'lmasa ko'rsatiladi. Bu holda, mahsulot qadoqini bevosita tekshirish tavsiya etiladi.
-
-**緑色表示：安全 / Yashil ko'rsatkich: Xavfsiz**
-
-選択したアレルゲンが検出されなかった場合に表示されます。ただし、製品パッケージの最終確認は常に推奨されます。
-
-Tanlangan allergenlar topilmasa ko'rsatiladi. Biroq, mahsulot qadoqini oxirgi marta tekshirish har doim tavsiya etiladi.
-
-### 重要な注意事項 / Muhim eslatma
-
-アレルゲン検出機能は、利用可能なAPIデータに基づいて動作します。以下の点にご注意ください：
-
-Allergen aniqlash funksiyasi mavjud API ma'lumotlariga asoslanib ishlaydi. Quyidagilarga e'tibor bering:
-
-- アプリは100%の精度を保証するものではありません / Ilova 100% aniqlikni kafolatlamaydi
-- 「微量を含む可能性」などの表示は検出されません / "Izlarni o'z ichiga olishi mumkin" kabi ma'lumotlar aniqlanmaydi
-- 製造工程での交差汚染は検出できません / Ishlab chiqarish jarayonidagi o'zaro ifloslanish aniqlanmaydi
-- 常に製品パッケージの成分表示を確認してください / Har doim mahsulot qadoqidagi tarkibni tekshiring
-- 重度のアレルギーをお持ちの方は、必ず医師に相談してください / Og'ir allergiyaga ega bo'lsangiz, albatta shifokor bilan maslahatlashing
+- `utils/achievementsUtils.js` - 達成ロジック / Yutuqlar logikasi
+- `screens/AchievementsScreen.js` - 達成一覧表示 / Yutuqlar ro'yxatini ko'rsatish
+- `components/AchievementToast.js` - 達成通知 / Yutuq xabarnomasi
 
 ---
 
-## 認証システム / Autentifikatsiya tizimi
+### 8. リマインダー通知 / Eslatma xabarnomalar
 
-このアプリは、バックエンドサーバーを使用せず、ローカルストレージ（AsyncStorage）で認証を管理しています。
+**何をする？ / Nima qiladi?**
 
-Ushbu ilova backend serverdan foydalanmasdan, lokal xotira (AsyncStorage) orqali autentifikatsiyani boshqaradi.
+食事、水分摂取、トレーニングのリマインダー通知を送信します。
 
-### 仕組み / Ishlash prinsipi
+Ovqat, suv iste'moli va trening uchun eslatma xabarnomalar yuboradi.
 
-- ユーザーデータはデバイスにローカルで保存されます / Foydalanuvchi ma'lumotlari qurilmada lokal saqlanadi
-- 各ユーザーの設定（アレルギー、プロフィール、記録など）は個別に管理されます / Har bir foydalanuvchining sozlamalari (allergiya, profil, yozuvlar va boshqalar) alohida boshqariladi
-- インターネット接続なしでもアプリの大部分の機能が使用可能です / Internet aloqasi bo'lmasa ham ilovaning ko'p funksiyalari ishlatilishi mumkin
+**どこで使う？ / Qayerda ishlatiladi?**
 
----
-
-## 開発履歴 / Ishlab chiqish tarixi
-
-### 最新のアップデート / Oxirgi yangilanish
-
-**アレルギー通知機能の追加（2026年10月）**
-
-Allergiya xabardorlik funksiyasi qo'shildi (2026 yil oktyabr)
-
-主な変更内容：
-
-- 9種類のアレルゲン対応機能を実装
-- 製品スキャン時の自動アレルゲンチェック
-- 三段階の警告システム（危険・注意・安全）
-- ユーザーごとのアレルゲン設定保存
-- Expo SDK 58へのアップグレード
-- React Native 0.88互換性対応
-
-Asosiy o'zgarishlar:
-
-- 9 xil allergen uchun funksiya qo'shildi
-- Mahsulotni skanerlashda avtomatik allergen tekshiruvi
-- Uch darajali ogohlantirish tizimi (xavfli - ehtiyot - xavfsiz)
-- Har bir foydalanuvchi uchun allergen sozlamalarini saqlash
-- Expo SDK 58 ga yangilash
-- React Native 0.88 bilan muvofiqlik
+- `utils/notificationsUtils.js` - 通知ロジック / Xabarnomalar logikasi
+- `screens/ProfileScreen.js` - 通知設定 / Xabarnomalar sozlamalari
 
 ---
 
-## トラブルシューティング / Muammolarni hal qilish
+### 9. プロフィール管理 / Profil boshqaruvi
 
-### よくある問題 / Tez-tez uchraydigan muammolar
+**何をする？ / Nima qiladi?**
 
-**製品が見つからない**
+ユーザープロフィール（身長、体重、年齢、性別）を管理し、BMIを自動計算します。アレルギー設定へのアクセスも提供します。
 
-Mahsulot topilmadi
+Foydalanuvchi profili (bo'y, vazn, yosh, jins)ni boshqaradi va BMI ni avtomatik hisoblab beradi. Allergiya sozlamalariga kirish imkoniyatini ham beradi.
 
-APIのデータベースに製品情報がない可能性があります。製品パッケージを直接確認してください。
+**どこで使う？ / Qayerda ishlatiladi?**
 
-API ma'lumotlar bazasida mahsulot ma'lumotlari bo'lmasligi mumkin. Mahsulot qadoqini bevosita tekshiring.
-
-**アレルギー警告が表示されない**
-
-Allergiya ogohlantirishي ko'rinmayapti
-
-プロフィール画面でアレルゲンが正しく設定されているか確認してください。また、ログインしているかも確認してください。
-
-Profil ekranida allergenlar to'g'ri sozlanganligini tekshiring. Shuningdek, tizimga kirganligingizni ham tekshiring.
-
-**カメラが起動しない**
-
-Kamera ishga tushmayapti
-
-アプリにカメラの権限が付与されているか確認してください。デバイスの設定からアプリの権限を確認できます。
-
-Ilovaga kamera ruxsati berilganligini tekshiring. Qurilma sozlamalaridan ilova ruxsatlarini tekshirish mumkin.
-
----
-
-## 貢献について / Hissa qo'shish haqida
-
-このプロジェクトへの貢献を歓迎します。バグ報告、機能提案、プルリクエストなど、どんな形でも歓迎します。
-
-Ushbu loyihaga hissa qo'shishni mamnuniyat bilan qabul qilamiz. Xato haqida xabar berish, funksiya taklif qilish, pull request yuborish - har qanday shakldagi hissa qo'shish mamnuniyat bilan qabul qilinadi.
-
----
-
-## ライセンス / Litsenziya
-
-このプロジェクトのライセンスについては、リポジトリの所有者にお問い合わせください。
-
-Ushbu loyihaning litsenziyasi haqida ma'lumot olish uchun repositoriya egasi bilan bog'laning.
-
----
-
-## 連絡先 / Aloqa
-
-プロジェクトに関する質問や提案がある場合は、GitHubのIssuesセクションでお知らせください。
-
-Loyiha haqida savollaringiz yoki takliflaringiz bo'lsa, GitHub'dagi Issues bo'limidan xabar bering.
+- `screens/ProfileScreen.js` - プロフィール画面 / Profil ekrani
 
 ---
 

@@ -7,12 +7,14 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { setupAllNotifications } from "./utils/notificationsUtils";
 import AchievementToast from "./components/AchievementToast";
+import AllergyQuestionnaireModal from "./components/AllergyQuestionnaireModal";
+import { hasCompletedAllergyQuestionnaire } from "./utils/allergenUtils";
+import { achievementToastState } from "./utils/achievementToastState";
 
 import { Home, Scan, User, Calendar, Search } from "lucide-react-native";
 
 // Screens
 import HomeScreen from "./screens/HomeScreen";
-import ProductScanner from "./screens/ProductScanner";
 import InfoScanner from "./screens/InfoScanner";
 import ProfileScreen from "./screens/ProfileScreen";
 import CalendarScreen from "./screens/CalendarScreen";
@@ -115,49 +117,44 @@ function AppNavigator() {
 
 export const navigationRef = React.createRef();
 
-// Глобальное состояние для toast уведомлений о достижениях
-export const achievementToastState = {
-  achievement: null,
-  visible: false,
-  listeners: [],
-  
-  show: (achievement) => {
-    achievementToastState.achievement = achievement;
-    achievementToastState.visible = true;
-    achievementToastState.listeners.forEach((listener) => listener());
-  },
-  
-  hide: () => {
-    achievementToastState.visible = false;
-    achievementToastState.listeners.forEach((listener) => listener());
-  },
-  
-  subscribe: (listener) => {
-    achievementToastState.listeners.push(listener);
-    return () => {
-      achievementToastState.listeners = achievementToastState.listeners.filter(
-        (l) => l !== listener
-      );
-    };
-  },
-};
-
 function AppContent() {
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading, user, isNewUser, markUserAsOnboarded } = useAuth();
   const [toastAchievement, setToastAchievement] = useState(null);
   const [toastVisible, setToastVisible] = useState(false);
+  const [showAllergyQuestionnaire, setShowAllergyQuestionnaire] = useState(false);
   
   useEffect(() => {
     if (isAuthenticated) {
-      // Настроить уведомления при входе в приложение
       setupAllNotifications().catch((e) => 
         console.error("Error setting up notifications:", e)
       );
     }
   }, [isAuthenticated]);
 
+  // Показать опрос об аллергии для пользователей, которые его еще не прошли
   useEffect(() => {
-    // Подписка на события достижений
+    const checkAndShowQuestionnaire = async () => {
+      if (isAuthenticated && user?.email) {
+        const hasCompleted = await hasCompletedAllergyQuestionnaire(user.email);
+        
+        if (!hasCompleted) {
+          const timer = setTimeout(() => {
+            setShowAllergyQuestionnaire(true);
+          }, 800);
+          return () => clearTimeout(timer);
+        }
+      }
+    };
+
+    checkAndShowQuestionnaire();
+  }, [isAuthenticated, user?.email, isNewUser]);
+
+  const handleAllergyQuestionnaireComplete = () => {
+    setShowAllergyQuestionnaire(false);
+    markUserAsOnboarded();
+  };
+
+  useEffect(() => {
     const unsubscribe = achievementToastState.subscribe(() => {
       setToastAchievement(achievementToastState.achievement);
       setToastVisible(achievementToastState.visible);
@@ -179,12 +176,19 @@ function AppContent() {
         </Stack.Navigator>
       </NavigationContainer>
       
-      {/* Глобальный Toast для достижений */}
       <AchievementToast
         achievement={toastAchievement}
         visible={toastVisible}
         onHide={() => achievementToastState.hide()}
       />
+
+      {isAuthenticated && (
+        <AllergyQuestionnaireModal
+          visible={showAllergyQuestionnaire}
+          userEmail={user?.email}
+          onComplete={handleAllergyQuestionnaireComplete}
+        />
+      )}
     </>
   );
 }

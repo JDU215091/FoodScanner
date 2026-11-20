@@ -354,6 +354,37 @@ export async function loadUserAllergens(userEmail) {
 }
 
 /**
+ * Check if user has completed allergy questionnaire
+ * @param {string} userEmail - User's email
+ * @returns {boolean} - True if completed
+ */
+export async function hasCompletedAllergyQuestionnaire(userEmail) {
+  try {
+    const key = `allergyQuestionnaireCompleted_${userEmail}`;
+    const data = await AsyncStorage.getItem(key);
+    return data === 'true';
+  } catch (error) {
+    console.error('Error checking questionnaire status:', error);
+    return false;
+  }
+}
+
+/**
+ * Mark allergy questionnaire as completed
+ * @param {string} userEmail - User's email
+ */
+export async function markAllergyQuestionnaireCompleted(userEmail) {
+  try {
+    const key = `allergyQuestionnaireCompleted_${userEmail}`;
+    await AsyncStorage.setItem(key, 'true');
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking questionnaire as completed:', error);
+    return { success: false, error };
+  }
+}
+
+/**
  * Format allergen detection result for display
  * @param {Object} detectionResult - Result from performAllergenCheck
  * @returns {string} - Formatted message

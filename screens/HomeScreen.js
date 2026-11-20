@@ -38,7 +38,7 @@ import {
   addWorkoutAndCheckAchievements,
 } from "../utils/achievementsUtils";
 import { sendAchievementNotification } from "../utils/notificationsUtils";
-import { achievementToastState } from "../App";
+import { achievementToastState } from "../utils/achievementToastState";
 
 const { width } = Dimensions.get("window");
 

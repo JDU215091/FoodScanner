@@ -41,7 +41,7 @@ import {
   resetAllAchievements,
   unlockAllAchievements,
 } from "../utils/achievementsUtils";
-import { achievementToastState } from "../App";
+import { achievementToastState } from "../utils/achievementToastState";
 
 const { width, height } = Dimensions.get("window");
 

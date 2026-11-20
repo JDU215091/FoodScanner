@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 
 export default function ProductSearch({ navigation }) {
@@ -22,7 +23,7 @@ export default function ProductSearch({ navigation }) {
 
   const API_KEY = "30b08bea0d89f631a60dc57bfd153844"; // FoodRepo API Key
 
-  const searchProduct = async (reset = true) => {
+  const searchProduct = async (reset = true, retryCount = 0) => {
     if (!query.trim()) return;
 
     try {
@@ -32,30 +33,98 @@ export default function ProductSearch({ navigation }) {
 
       if (/^\d+$/.test(query)) {
         // Поиск по штрихкоду в FoodRepo
-        const response = await fetch(
-          `https://www.foodrepo.org/api/v3/products?barcodes_ean13=${query}`,
-          {
-            headers: {
-              Authorization: `Token token=${API_KEY}`,
-            },
+        try {
+          const response = await fetch(
+            `https://www.foodrepo.org/api/v3/products?barcodes_ean13=${query}`,
+            {
+              headers: {
+                Authorization: `Token token=${API_KEY}`,
+                'Accept': 'application/json',
+              },
+              timeout: 10000,
+            }
+          );
+
+          // Check if response is OK
+          if (!response.ok) {
+            throw new Error(`FoodRepo API error: ${response.status}`);
           }
-        );
-        const json = await response.json();
-        // FoodRepo возвращает plain-объекты в data
-        const foodRepoItems = (json.data || []).map(item => ({
-          ...item,
-          __source: 'foodrepo',
-        }));
-        setResults(foodRepoItems);
-        setHasMore(false);
+
+          // Check content type before parsing
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('API returned non-JSON response. Check your internet connection.');
+          }
+
+          const json = await response.json();
+          // FoodRepo возвращает plain-объекты в data
+          const foodRepoItems = (json.data || []).map(item => ({
+            ...item,
+            __source: 'foodrepo',
+          }));
+          setResults(foodRepoItems);
+          setHasMore(false);
+        } catch (foodRepoError) {
+          try {
+            const offResponse = await fetch(
+              `https://world.openfoodfacts.org/api/v0/product/${query}.json`,
+              {
+                headers: {
+                  'Accept': 'application/json',
+                },
+                timeout: 10000,
+              }
+            );
+
+            if (offResponse.ok) {
+              const contentType = offResponse.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const json = await offResponse.json();
+                if (json.status === 1 && json.product) {
+                  setResults([{ ...json.product, __source: 'off' }]);
+                  setHasMore(false);
+                  return; // Успешно нашли в Open Food Facts
+                }
+              }
+            }
+          } catch (offError) {
+            throw foodRepoError;
+          }
+          
+          throw foodRepoError;
+        }
       } else {
         // Поиск по названию в Open Food Facts
-        // ИСПРАВЛЕНО: Удалены лишние пробелы перед https
         const response = await fetch(
           `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
             query
-          )}&page=${reset ? 1 : page}&page_size=20&sort_by=unique_scans_n&json=1`
+          )}&page=${reset ? 1 : page}&page_size=20&sort_by=unique_scans_n&json=1`,
+          {
+            headers: {
+              'Accept': 'application/json',
+            },
+            timeout: 15000,
+          }
         );
+
+        // Check if response is OK
+        if (!response.ok) {
+          // Если 503 (Service Unavailable) и это первая попытка, повторить через 2 секунды
+          if (response.status === 503 && retryCount < 2) {
+            setTimeout(() => {
+              searchProduct(reset, retryCount + 1);
+            }, 2000);
+            return;
+          }
+          throw new Error(`Open Food Facts API error: ${response.status}`);
+        }
+
+        // Check content type before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('API returned non-JSON response. Check your internet connection.');
+        }
+
         const json = await response.json();
 
         // ИСПРАВЛЕНО: Проверка, что json.products существует и является массивом
@@ -78,9 +147,30 @@ export default function ProductSearch({ navigation }) {
       }
     } catch (error) {
       console.error("Search error:", error);
-      // ИСПРАВЛЕНО: Очищаем результаты при ошибке
+      
+      // Show user-friendly error message
+      let errorMessage = "Ошибка при поиске";
+      if (error.message.includes('503') || error.message.includes('Service Unavailable')) {
+        errorMessage = "Сервер временно недоступен. Попробуйте позже.";
+      } else if (error.message.includes('non-JSON')) {
+        errorMessage = "Проверьте подключение к интернету";
+      } else if (error.message.includes('Network request failed')) {
+        errorMessage = "Нет подключения к интернету";
+      } else if (error.message.includes('JSON')) {
+        errorMessage = "Ошибка обработки данных API";
+      } else if (error.message.includes('timeout')) {
+        errorMessage = "Превышено время ожидания. Попробуйте снова.";
+      }
+      
+      Alert.alert(
+        'Ошибка поиска',
+        errorMessage + '\n\nПопробуйте:\n• Проверить интернет\n• Повторить поиск\n• Попробовать другой запрос',
+        [
+          { text: 'OK', style: 'cancel' }
+        ]
+      );
+      
       setResults([]);
-      // Оставляем hasMore как false, чтобы не пытаться грузить больше
       setHasMore(false);
     } finally {
       if (loading) {

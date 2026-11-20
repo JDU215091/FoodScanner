@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
     const bootstrapAsync = async () => {
@@ -18,13 +19,11 @@ export function AuthProvider({ children }) {
         const token = await AsyncStorage.getItem('userToken');
         if (token) {
           const email = await AsyncStorage.getItem('userEmail');
-          // Проверяем, что пользователь с таким email действительно существует в списке
           const allUsers = await getAllUsers();
           if (allUsers[email]) {
             setUser({ email });
             setIsAuthenticated(true);
           } else {
-            // Токен есть, но пользователь удален из списка - очищаем сессию
             await signOut();
           }
         }
@@ -38,7 +37,6 @@ export function AuthProvider({ children }) {
     bootstrapAsync();
   }, []);
 
-  // Вспомогательная функция для получения всех пользователей
   const getAllUsers = async () => {
     try {
       const usersJSON = await AsyncStorage.getItem('allUsers');
@@ -49,7 +47,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Вспомогательная функция для сохранения всех пользователей
   const setAllUsers = async (users) => {
     try {
       await AsyncStorage.setItem('allUsers', JSON.stringify(users));
@@ -60,23 +57,19 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     try {
-      console.log("signIn: Attempting to sign in for email:", email);
-
       const allUsers = await getAllUsers();
       const userData = allUsers[email];
 
       if (userData && userData.password === password) {
         const token = `token_${Date.now()}`;
         await AsyncStorage.setItem('userToken', token);
-        await AsyncStorage.setItem('userEmail', email); // Сохраняем текущий email
+        await AsyncStorage.setItem('userEmail', email);
 
         setUser({ email });
         setIsAuthenticated(true);
 
-        console.log("signIn: Success, user set and authenticated");
         return { success: true };
       } else {
-        console.log("signIn: Invalid credentials");
         return { success: false, message: 'Неверный email или пароль' };
       }
     } catch (e) {
@@ -87,33 +80,24 @@ export function AuthProvider({ children }) {
 
   const signUp = async (email, password) => {
     try {
-      console.log("signUp: Attempting to register for email:", email);
-
       const allUsers = await getAllUsers();
 
-      // Проверяем, существует ли уже пользователь с таким email
       if (allUsers[email]) {
-        console.log("signUp: ERROR - user already exists:", email);
         return { success: false, message: 'Пользователь с таким email уже существует' };
       }
 
-      console.log("signUp: No existing user, proceeding with registration...");
-
-      // Добавляем нового пользователя в объект
       allUsers[email] = { password };
       await setAllUsers(allUsers);
 
-      // Создаём токен и устанавливаем текущего пользователя
       const token = `token_${Date.now()}`;
       await AsyncStorage.setItem('userToken', token);
       await AsyncStorage.setItem('userEmail', email);
 
       setUser({ email });
-      setIsAuthenticated(true); // Входим автоматически
+      setIsAuthenticated(true);
+      setIsNewUser(true);
 
-      console.log("signUp: Registration successful, user set, isAuthenticated = true");
-
-      return { success: true };
+      return { success: true, isNewUser: true };
     } catch (e) {
       console.error('Error signing up:', e);
       return { success: false, message: 'Ошибка регистрации' };
@@ -122,26 +106,28 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     try {
-      // Удаляем токен и email текущего пользователя
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('userEmail');
 
       setUser(null);
       setIsAuthenticated(false);
+      setIsNewUser(false);
     } catch (e) {
       console.error('Error signing out:', e);
     }
   };
 
-  // Функция для очистки *всех* данных аутентификации (для отладки)
+  const markUserAsOnboarded = () => {
+    setIsNewUser(false);
+  };
+
   const clearAuthStorage = async () => {
     try {
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('userEmail');
-      await AsyncStorage.removeItem('allUsers'); // Удаляем список всех пользователей
-      console.log("AuthProvider: All auth storage cleared");
+      await AsyncStorage.removeItem('allUsers');
     } catch (e) {
-      console.error("AuthProvider: Error clearing auth storage:", e);
+      console.error("Error clearing auth storage:", e);
     }
   };
 
@@ -153,6 +139,8 @@ export function AuthProvider({ children }) {
     signOut,
     clearAuthStorage,
     isAuthLoading,
+    isNewUser,
+    markUserAsOnboarded,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

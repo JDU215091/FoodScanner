@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Camera, ScanLine } from 'lucide-react-native';
 import axios from 'axios';
-import ProductScanner from './ProductScanner';
 import { products } from '../data/products';
 import { useAuth } from '../auth/AuthProvider';
 import { loadUserAllergens, performAllergenCheck } from '../utils/allergenUtils';
@@ -11,18 +13,51 @@ export default function InfoScanner() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [scanned, setScanned] = useState(false);
+  const cameraRef = useRef(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setScanned(false);
+      return () => {};
+    }, [])
+  );
+
+  if (!permission) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.loadingText}>Загрузка камеры...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!permission.granted) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.permissionContainer}>
+          <Camera size={64} color="#5B7CFF" />
+          <Text style={styles.permissionTitle}>Доступ к камере</Text>
+          <Text style={styles.permissionText}>
+            Для сканирования штрих-кодов необходим доступ к камере
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermission}
+          >
+            <Text style={styles.permissionButtonText}>Разрешить доступ</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const fetchProductInfo = async (barcode) => {
     setLoading(true);
     try {
-      // 🔍 ШАГ 1: Проверка локальной базы данных
-      console.log('🔍 Проверяю локальную базу для штрих-кода:', barcode);
       const localProduct = products.find(p => p.barcode === barcode);
       
       if (localProduct) {
-        // ✅ Продукт найден в локальной базе!
-        console.log('✅ Найден в локальной базе:', localProduct.name);
-        
         const productData = {
           product_name: localProduct.name,
           barcode: barcode,
@@ -33,117 +68,140 @@ export default function InfoScanner() {
             fat: 'Нет данных',
             carbohydrates: 'Нет данных',
           },
-          _source: 'local' // Метка что из локальной базы
+          _source: 'local'
         };
         
-        // 🔍 Проверка на аллергены
         const allergenCheckResult = await checkProductForAllergens(productData);
         
         setLoading(false);
         
-        // 📱 Переход на страницу с деталями
         navigation.navigate('ProductScanInfo', { 
           productData: productData,
           barcode: barcode,
           allergenCheckResult: allergenCheckResult
         });
         
-        return; // Останавливаемся, не идем в API
+        return;
       }
       
-      // 🌍 ШАГ 2: Если не нашли локально → запрос к Open Food Facts API
-      console.log('⏳ Не найден локально, проверяю Open Food Facts API...');
-      
       const response = await axios.get(
-        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
+        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
+        {
+          headers: {
+            'Accept': 'application/json',
+          },
+          timeout: 10000,
+        }
       );
+
+      if (!response.data || typeof response.data !== 'object') {
+        throw new Error('Invalid API response format');
+      }
       
       if (response.data.status === 1) {
-        // ✅ Продукт найден в Open Food Facts
-        console.log('✅ Найден в Open Food Facts:', response.data.product.product_name);
-        
         const productData = {
           ...response.data.product,
           barcode: barcode,
-          _source: 'api' // Метка что из API
+          _source: 'api'
         };
         
-        // 🔍 Проверка на аллергены
         const allergenCheckResult = await checkProductForAllergens(productData);
         
         setLoading(false);
         
-        // 📱 Переход на страницу с деталями
         navigation.navigate('ProductScanInfo', { 
           productData: productData,
           barcode: barcode,
           allergenCheckResult: allergenCheckResult
         });
       } else {
-        // ❌ Продукт не найден нигде
-        console.log('❌ Продукт не найден ни в локальной базе, ни в Open Food Facts');
-        setProductInfo(null);
+        console.log('Product not found in database');
         Alert.alert(
           '❌ Продукт не найден',
           `Штрих-код ${barcode} не найден ни в локальной базе, ни в базе Open Food Facts.\n\nМожете добавить этот продукт вручную.`
         );
+        setTimeout(() => setScanned(false), 2000);
       }
     } catch (error) {
-      console.error('Ошибка при получении данных:', error);
+      console.error('Error fetching product:', error);
+      
+      let errorMessage = 'Не удалось получить данные о продукте.';
+      
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = 'Превышено время ожидания. Проверьте подключение к интернету.';
+      } else if (error.message.includes('Network Error') || error.message.includes('Network request failed')) {
+        errorMessage = 'Нет подключения к интернету.';
+      } else if (error.message.includes('Invalid API response')) {
+        errorMessage = 'Сервер вернул некорректные данные. Попробуйте позже.';
+      } else if (error.response && error.response.status >= 500) {
+        errorMessage = 'Сервер временно недоступен. Попробуйте позже.';
+      }
+      
       Alert.alert(
         'Ошибка',
-        'Не удалось получить данные о продукте. Проверьте подключение к интернету.'
+        errorMessage + '\n\nШтрих-код: ' + barcode
       );
+      setTimeout(() => setScanned(false), 2000);
     } finally {
       setLoading(false);
     }
   };
 
-  // Проверка продукта на аллергены
   const checkProductForAllergens = async (productData) => {
     try {
-      if (!user?.email) {
-        // Пользователь не вошел в систему
-        return null;
-      }
+      if (!user?.email) return null;
 
-      // Загружаем аллергены пользователя
       const userAllergens = await loadUserAllergens(user.email);
       
-      if (userAllergens.length === 0) {
-        // У пользователя нет настроенных аллергенов
-        return null;
-      }
+      if (userAllergens.length === 0) return null;
 
-      // Выполняем проверку
       const result = performAllergenCheck(productData, userAllergens);
-      
-      console.log('🔍 Результат проверки аллергенов:', result);
       
       return result;
     } catch (error) {
-      console.error('Ошибка при проверке аллергенов:', error);
+      console.error('Error checking allergens:', error);
       return null;
     }
   };
 
-  const handleScan = (data) => {
-    if (data.includes('http')) {
-      // Если это URI фото, можно отправить на API компьютерного зрения (например, Google Cloud Vision)
-      Alert.alert(
-        'Обработка фото',
-        'Обработка фото пока не реализована. Используйте режим сканера штрих-кодов.'
-      );
-    } else {
-      // Если это штрихкод
-      console.log('📱 Отсканирован штрих-код:', data);
-      fetchProductInfo(data);
+  const handleBarcodeScan = ({ data }) => {
+    if (scanned) return;
+    setScanned(true);
+
+    if (data) {
+      if (data.includes('http')) {
+        Alert.alert(
+          'Обработка фото',
+          'Обработка фото пока не реализована. Используйте режим сканера штрих-кодов.'
+        );
+        setTimeout(() => setScanned(false), 2000);
+      } else {
+        fetchProductInfo(data);
+      }
     }
   };
 
   return (
     <View style={styles.container}>
-      <ProductScanner onScan={handleScan} />
+      <CameraView
+        ref={cameraRef}
+        style={styles.camera}
+        facing="back"
+        onBarcodeScanned={handleBarcodeScan}
+        barcodeScannerSettings={{
+          barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
+        }}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.scanFrame}>
+            <ScanLine size={200} color="#5B7CFF" />
+            <Text style={styles.scanText}>
+              Наведите камеру на штрих-код
+            </Text>
+          </View>
+        </View>
+      </CameraView>
+
       {loading && (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>🔍 Поиск продукта...</Text>
@@ -157,6 +215,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  scanFrame: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scanText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 20,
+    textAlign: 'center',
   },
   loadingContainer: {
     position: 'absolute',
@@ -173,5 +251,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#EEF2FF',
+  },
+  permissionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0B1220',
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  permissionText: {
+    fontSize: 16,
+    color: '#667085',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  permissionButton: {
+    backgroundColor: '#5B7CFF',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  permissionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
